@@ -119,31 +119,20 @@ There also ought to be rows for each of the planted acorns that did not germinat
 to import and merge the spreadsheets, we can use
 
 ```{r}
-#install.packages("plyr")
+install.packages("plyr")
 library("dplyr")                                                
 library("plyr")                                                 
 library("readr")  
 library("readxl")
 
 
-gfg_data <- list.files(path = "Oak Project/Data",    
-                       pattern = "*.xlsx",
+oak_data <- list.files(path = "Oak Project/Data",    
+                       pattern = "*6Clean.xlsx",
                        full.names = TRUE) |>  
   lapply(read_excel, 
-         na = "NA", sheet = "Input1") |> 
-  bind_rows                                                      
-
-gfg_data 
-```
-
-```{r}
-gfg_data |> filter(!Recorder )
-```
-
-```{r}
-renames <- function(data){
-  data <- data |> 
-  rename(Page_Num = "Page #",
+         na = "NA", sheet = "Input1", skip = 1) |> 
+  bind_rows()  |> 
+  dplyr::rename(Page_Num = "Page #",
          Date = "MM/DD/YYYY",
          Recorder  = "Name",
          Block  = "#...4",
@@ -158,8 +147,16 @@ renames <- function(data){
          Num_germinated   = "#...13" ,
          RCD  = "(mm)",
          Notes   = "as written on data sheet")
-  return(data)
-  }
+
+oak_data 
+```
+
+```{r}
+gfg_data |> filter(!Recorder == "Name")
+```
+
+```{r}
+
 ```
 
 ```{r}
@@ -186,4 +183,46 @@ data5 <- read_excel("Oak Project/Data/Survival_HeightOct2025Clean.xlsx",
              sheet = "Input1", skip = 1,
              na = "NA")
 
+```
+
+```{r}
+oak_data_CLEAN <- oak_data |> 
+  separate(Tag_Num, into = c("Tag_Num", "Acorn_Num"), sep = "A") |> 
+  mutate(Tag_Num = as.numeric(Tag_Num),
+         Acorn_Num = as.numeric(Acorn_Num)) |> 
+  
+  mutate(Leaf_greenness = as.numeric(Leaf_greenness), 
+         Dead = case_when(
+           Seedling_Ht_cm == 0 ~ "Dead",
+           Seedling_Ht_cm > 0  ~ "Alive"
+         ))
+  
+ 
+ oak_data_CLEAN
+ 
+ 
+ 
+```
+
+```{r}
+oak_data_CLEAN |> 
+  select(Tag_Num, Acorn_Num) |> 
+  distinct() |> 
+  arrange(Tag_Num)
+
+
+Acorn_ID_Table <- oak_data_CLEAN |> 
+  select(Tag_Num, Block, Treatment, OA_microclimate, Date ) |> 
+  distinct() |> 
+  arrange(Tag_Num) |> 
+  mutate(Acorn1 = 1, Acorn2 = 2, Acorn3 = 3) |> 
+  pivot_longer(
+    cols = c(Acorn1, Acorn2, Acorn3), 
+    names_to = "Whatever", 
+    values_to = "Acorn_Num") |> 
+  select(-Whatever)
+
+Acorn_ID_Table
+
+oak_data_CLEAN |> full_join(Acorn_ID_Table)
 ```
