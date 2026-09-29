@@ -13,12 +13,15 @@ library(tidyverse)
 library(readxl)
 Survival_HeightApril26Blocks7_6Clean <- 
   read_excel("Oak Project/Data/Survival_HeightApril26Blocks7&6Clean.xlsx", 
-                                sheet = "Input1", skip = 1)
+                                sheet = "Input1", skip = 1,
+             na = "NA")
 
-View(Survival_HeightApril26Blocks7_6Clean)
+#View(Survival_HeightApril26Blocks7_6Clean)
 
 names(Survival_HeightApril26Blocks7_6Clean)
 ```
+
+Rename columns
 
 ```{r}
 Survival_HeightApril26Blocks7_6Clean <- 
@@ -42,4 +45,145 @@ Survival_HeightApril26Blocks7_6Clean <-
        Notes   = "as written on data sheet")
 
 Survival_HeightApril26Blocks7_6Clean
+```
+
+```{r}
+Survival_HeightApril26Blocks7_6Clean
+```
+
+Column Notes:
+
+Oak Type - Oak Type refers to how it was planted if at all.
+
+- A = Acorn
+- NR = Natural Recruit
+- S = Seedling
+
+Treatments - Treatment refers to microclimate treatment (where it was planted).
+
+- OA = Open Area
+- SA = Salvia apiana
+- DT = Downed Tree
+- AC = Adult canopy
+- NP = Nurse plant
+- DL = Dripline
+
+Microclimates - OA Microclimate refers to the treatment conducted on open area plots
+
+- CN = Control
+- TH = Thatch removed
+- TI = Thatch removed AND invasive species removed
+
+Column L (Greenness) is a formula using :=IF(K3=0, 100, 100-(K3/J3)\*100)
+
+if dead leaves = 0, then its 100% green
+
+if not then, 100 - dead leaves/green leaves\*100
+
+- not sure I like this formula! I feel like it ought to be green/dead + green) ? will have to ask Sarah Kimball
+
+```{r}
+Survival_HeightApril26Blocks7_6Clean$RCD |> unique()
+```
+
+NEEDS:
+
+- Tag nums are confusing - why some with A1, A2, etc?
+
+- seedling height needs to be converted to numeric, figure out what NA means
+
+- num leaves, num dead leaves also to numeric, figure out what NA means
+
+- num germinated, RCD also to numeric
+
+- leaf greenness what is #VALUE in context
+
+- import multiple excel spreadsheets and merge them together
+
+```{r}
+
+```
+
+SOLUTIONS:
+
+Converting rows to numeric is easy by adding an argument to the read_excel() function to interpret "NA" as NA. This works for us because the team that entered data was quite consistent in entering their NAs.
+
+spreadsheet contains both planted acorns and natural recruits. NA is for sites where no planted acorns germinated, therefore most variables not collected about it.
+
+Tag_num actually contains two pieces of information - the site (### and the acorn number (A1, A2, A3).
+
+It would be better if these were separate columns!
+
+There also ought to be rows for each of the planted acorns that did not germinate (e.g., a lot more NAs). That way summaries would make more sense.
+
+to import and merge the spreadsheets, we can use
+
+```{r}
+#install.packages("plyr")
+library("dplyr")                                                
+library("plyr")                                                 
+library("readr")  
+library("readxl")
+
+
+gfg_data <- list.files(path = "Oak Project/Data",    
+                       pattern = "*.xlsx",
+                       full.names = TRUE) |>  
+  lapply(read_excel, 
+         na = "NA", sheet = "Input1") |> 
+  bind_rows                                                      
+
+gfg_data 
+```
+
+```{r}
+gfg_data |> filter(!Recorder )
+```
+
+```{r}
+renames <- function(data){
+  data <- data |> 
+  rename(Page_Num = "Page #",
+         Date = "MM/DD/YYYY",
+         Recorder  = "Name",
+         Block  = "#...4",
+         Tag_Num  = "#...5",
+         Oak_type  = "NR, S, or A",
+         Treatment   = "AC, OA, NP, DT, or DL",
+         OA_microclimate   = "TH, TI, CN",
+         Seedling_Ht_cm   =  "(cm)",
+         Num_leaves  = "#...10",
+         Num_dead_leaves   = "#...11",
+         Leaf_greenness  = "%",
+         Num_germinated   = "#...13" ,
+         RCD  = "(mm)",
+         Notes   = "as written on data sheet")
+  return(data)
+  }
+```
+
+```{r}
+library(tidyverse)
+
+data1 <-  read_excel("Oak Project/Data/Survival_HeightApril26Blocks7&6Clean.xlsx", 
+             sheet = "Input1", skip = 1,
+             na = "NA") |> 
+  renames()
+
+
+data2 <-   read_excel("Oak Project/Data/Survival_HeightFeb26Clean.xlsx", 
+             sheet = "Input1", skip = 1,
+             na = "NA")
+
+data3 <-   read_excel("Oak Project/Data/Survival_HeightMarch26Blocks7&6Clean.xlsx", 
+             sheet = "Input1", skip = 1,
+             na = "NA")
+
+data4 <-  read_excel("Oak Project/Data/Survival_HeightMay26Blocks5-7Clean.xlsx", 
+             sheet = "Input1", skip = 1,
+             na = "NA")
+data5 <- read_excel("Oak Project/Data/Survival_HeightOct2025Clean.xlsx", 
+             sheet = "Input1", skip = 1,
+             na = "NA")
+
 ```
