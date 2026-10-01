@@ -148,6 +148,9 @@ oak_data <- list.files(path = "Oak Project/Data",
          RCD  = "(mm)",
          Notes   = "as written on data sheet")
 
+
+unloadNamespace("plyr")
+
 oak_data 
 ```
 
@@ -197,7 +200,6 @@ oak_data_CLEAN |> full_join(Acorn_ID_Table)
 
 ```{r}
 library(tidyverse)
-unloadNamespace("plyr")
 
 Revisited_Seedlings <- oak_data_CLEAN |> 
   filter(!is.na(Seedling_Ht_cm) == TRUE) |> 
