@@ -119,7 +119,7 @@ There also ought to be rows for each of the planted acorns that did not germinat
 to import and merge the spreadsheets, we can use
 
 ```{r}
-install.packages("plyr")
+#install.packages("plyr")
 library("dplyr")                                                
 library("plyr")                                                 
 library("readr")  
@@ -149,40 +149,6 @@ oak_data <- list.files(path = "Oak Project/Data",
          Notes   = "as written on data sheet")
 
 oak_data 
-```
-
-```{r}
-gfg_data |> filter(!Recorder == "Name")
-```
-
-```{r}
-
-```
-
-```{r}
-library(tidyverse)
-
-data1 <-  read_excel("Oak Project/Data/Survival_HeightApril26Blocks7&6Clean.xlsx", 
-             sheet = "Input1", skip = 1,
-             na = "NA") |> 
-  renames()
-
-
-data2 <-   read_excel("Oak Project/Data/Survival_HeightFeb26Clean.xlsx", 
-             sheet = "Input1", skip = 1,
-             na = "NA")
-
-data3 <-   read_excel("Oak Project/Data/Survival_HeightMarch26Blocks7&6Clean.xlsx", 
-             sheet = "Input1", skip = 1,
-             na = "NA")
-
-data4 <-  read_excel("Oak Project/Data/Survival_HeightMay26Blocks5-7Clean.xlsx", 
-             sheet = "Input1", skip = 1,
-             na = "NA")
-data5 <- read_excel("Oak Project/Data/Survival_HeightOct2025Clean.xlsx", 
-             sheet = "Input1", skip = 1,
-             na = "NA")
-
 ```
 
 ```{r}
@@ -225,4 +191,41 @@ Acorn_ID_Table <- oak_data_CLEAN |>
 Acorn_ID_Table
 
 oak_data_CLEAN |> full_join(Acorn_ID_Table)
+
+
+```
+
+```{r}
+library(tidyverse)
+unloadNamespace("plyr")
+
+Revisited_Seedlings <- oak_data_CLEAN |> 
+  filter(!is.na(Seedling_Ht_cm) == TRUE) |> 
+  group_by(Tag_Num, Acorn_Num, Oak_type) |> count() |> filter(n > 1) |> 
+  inner_join(oak_data_CLEAN) |> 
+  select(Tag_Num, Acorn_Num, Oak_type, Date, 8:16) |> 
+  mutate(Unique_Seedling_ID = paste(Tag_Num, Acorn_Num, Oak_type))
+
+
+Revisited_Seedlings |> 
+  ggplot(aes(x = Date, y = Seedling_Ht_cm, color = Treatment)) + 
+  geom_point() + 
+  geom_line(aes(group = Unique_Seedling_ID))
+  
+
+```
+
+```{r}
+Revisited_Seedlings |> 
+  ggplot(aes(x = Date, y = Num_leaves, color = Treatment)) + 
+  geom_point() + 
+  geom_line(aes(group = Unique_Seedling_ID))
+```
+
+```{r}
+Revisited_Seedlings |> ggplot(aes(x = Date, y = Leaf_greenness, color = Treatment)) + geom_point() + geom_line(aes(group = Unique_Seedling_ID))
+```
+
+```{r}
+oak_data_CLEAN |> 
 ```
